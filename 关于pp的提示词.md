@@ -137,17 +137,31 @@ data = """
 38.3.137.254:117:2.778
 """
 
-# 解析数据
 latencies = []
 ips = []
+ttls = []
 
 for line in data.strip().splitlines():
     line = line.strip()
     if not line or line.startswith('#'):
         continue
-    ip, port, latency = line.split(":")
-    ips.append(ipaddress.IPv4Address(ip))
-    latencies.append(float(latency))
+
+    parts = line.split(":")
+    if len(parts) != 3:
+        continue  # 格式不对，跳过
+
+    ip_str, ttl_str, latency_str = parts
+
+    try:
+        ip = ipaddress.IPv4Address(ip_str)
+        ttl = int(ttl_str)
+        latency = float(latency_str)
+    except (ValueError, ipaddress.AddressValueError):
+        continue  # 数据类型不对，跳过
+
+    ips.append(ip)
+    ttls.append(ttl)
+    latencies.append(latency)
 
 # 统计信息保存为字典
 result = {}
@@ -160,8 +174,8 @@ result['max_latency'] = round(max(latencies), 3)
 result['mean_latency'] = round(statistics.mean(latencies), 3)
 result['median_latency'] = round(statistics.median(latencies), 3)
 result['variance_latency'] = round(statistics.variance(latencies), 3) if len(latencies) > 1 else 0.0
+result['ttl_variance'] = round(statistics.variance(ttls), 3) if len(ttls) > 1 else 0.0
 
-# 打印结果
 print(result)
 ```
 
